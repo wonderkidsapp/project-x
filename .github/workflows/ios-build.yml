@@ -29,7 +29,10 @@ jobs:
 
       - name: Install Pods
         working-directory: hpws-mobile/ios
-        run: pod install
+        run: |
+          pod cache clean --all
+          pod repo update
+          pod install || (sleep 30 && pod install) || (sleep 60 && pod install)
 
       - name: Build App
         working-directory: hpws-mobile/ios
