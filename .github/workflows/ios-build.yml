@@ -25,13 +25,19 @@ jobs:
 
       - name: Expo Prebuild
         working-directory: hpws-mobile
-        run: npx expo prebuild --platform ios
+        run: npx expo prebuild --platform ios --no-install
+
+      - name: List iOS Files (Debug)
+        working-directory: hpws-mobile/ios
+        run: ls -R
 
       - name: Build App
         working-directory: hpws-mobile/ios
         run: |
-          xcodebuild -workspace *.xcworkspace \
-            -scheme HpwsMobile \
+          WORKSPACE=$(ls -d *.xcworkspace | head -n 1)
+          echo "Building workspace: $WORKSPACE"
+          xcodebuild -workspace "$WORKSPACE" \
+            -scheme "HpwsMobile" \
             -configuration Release \
             -sdk iphoneos \
             -derivedDataPath build \
