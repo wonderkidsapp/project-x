@@ -1,0 +1,54 @@
+name: Build iOS Unsigned (for Sideloadly)
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main, master ]
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: 'npm'
+          cache-dependency-path: hpws-mobile/package.json
+
+      - name: Install Dependencies
+        working-directory: hpws-mobile
+        run: npm install
+
+      - name: Expo Prebuild
+        working-directory: hpws-mobile
+        run: npx expo prebuild --platform ios
+
+      - name: Build App
+        working-directory: hpws-mobile/ios
+        run: |
+          xcodebuild -workspace *.xcworkspace \
+            -scheme HpwsMobile \
+            -configuration Release \
+            -sdk iphoneos \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            PROVISIONING_PROFILE_SPECIFIER=""
+
+      - name: Package IPA
+        working-directory: hpws-mobile/ios
+        run: |
+          mkdir -p Payload
+          cp -r build/Build/Products/Release-iphoneos/*.app Payload/
+          zip -r HpwsMobile-Unsigned.ipa Payload
+
+      - name: Upload IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: hpws-ios-unsigned
+          path: hpws-mobile/ios/HpwsMobile-Unsigned.ipa

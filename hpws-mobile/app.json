@@ -1,0 +1,62 @@
+{
+  "expo": {
+    "name": "HPWS HPDE",
+    "slug": "hpws-hpde",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#000000"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.hpws.hpde",
+      "infoPlist": {
+        "NSCameraUsageDescription": "HPWS uses the camera to detect obstacles for visually impaired users.",
+        "NSMicrophoneUsageDescription": "HPWS uses the microphone for voice commands and ambient noise detection.",
+        "UIBackgroundModes": [
+          "audio",
+          "location",
+          "fetch"
+        ]
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#000000"
+      },
+      "package": "com.hpws.hpde",
+      "permissions": [
+        "CAMERA",
+        "RECORD_AUDIO",
+        "WAKE_LOCK"
+      ]
+    },
+    "plugins": [
+      [
+        "react-native-vision-camera",
+        {
+          "cameraPermissionText": "HPWS uses the camera to detect obstacles for visually impaired users.",
+          "enableMicrophonePermission": true,
+          "microphonePermissionText": "HPWS uses the microphone for voice commands."
+        }
+      ],
+      "expo-build-properties",
+      [
+        "expo-dev-client"
+      ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "your-project-id"
+      }
+    }
+  }
+}
