@@ -7,3 +7,5 @@ build/
 .DS_Store
 hpws-mobile/node_modules/
 hpws-backend/node_modules/
+hpws-mobile/ios/
+hpws-mobile/android/
