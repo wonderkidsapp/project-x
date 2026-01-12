@@ -48,7 +48,17 @@
           "microphonePermissionText": "HPWS uses the microphone for voice commands."
         }
       ],
-      "expo-build-properties",
+      [
+        "expo-build-properties",
+        {
+          "ios": {
+            "newArchEnabled": false
+          },
+          "android": {
+            "newArchEnabled": false
+          }
+        }
+      ],
       [
         "expo-dev-client"
       ]
