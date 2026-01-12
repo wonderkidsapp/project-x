@@ -25,26 +25,37 @@ jobs:
 
       - name: Expo Prebuild
         working-directory: hpws-mobile
-        run: npx expo prebuild --platform ios --no-install
-
-      - name: List iOS Files (Debug)
-        working-directory: hpws-mobile/ios
-        run: ls -R
+        run: npx expo prebuild --platform ios
 
       - name: Build App
         working-directory: hpws-mobile/ios
         run: |
-          WORKSPACE=$(ls -d *.xcworkspace | head -n 1)
-          echo "Building workspace: $WORKSPACE"
-          xcodebuild -workspace "$WORKSPACE" \
-            -scheme "HpwsMobile" \
-            -configuration Release \
-            -sdk iphoneos \
-            -derivedDataPath build \
-            CODE_SIGNING_ALLOWED=NO \
-            CODE_SIGNING_REQUIRED=NO \
-            CODE_SIGN_IDENTITY="" \
-            PROVISIONING_PROFILE_SPECIFIER=""
+          WORKSPACE=$(ls -d *.xcworkspace 2>/dev/null | head -n 1)
+          SCHEME=$(ls -d HPWSHPDE.xcodeproj 2>/dev/null | sed 's/\.xcodeproj//')
+          
+          if [ -z "$WORKSPACE" ]; then
+            echo "No workspace found, building with project file..."
+            xcodebuild -project "${SCHEME}.xcodeproj" \
+              -scheme "$SCHEME" \
+              -configuration Release \
+              -sdk iphoneos \
+              -derivedDataPath build \
+              CODE_SIGNING_ALLOWED=NO \
+              CODE_SIGNING_REQUIRED=NO \
+              CODE_SIGN_IDENTITY="" \
+              PROVISIONING_PROFILE_SPECIFIER=""
+          else
+            echo "Building workspace: $WORKSPACE with scheme: $SCHEME"
+            xcodebuild -workspace "$WORKSPACE" \
+              -scheme "$SCHEME" \
+              -configuration Release \
+              -sdk iphoneos \
+              -derivedDataPath build \
+              CODE_SIGNING_ALLOWED=NO \
+              CODE_SIGNING_REQUIRED=NO \
+              CODE_SIGN_IDENTITY="" \
+              PROVISIONING_PROFILE_SPECIFIER=""
+          fi
 
       - name: Package IPA
         working-directory: hpws-mobile/ios
