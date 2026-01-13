@@ -1,4 +1,4 @@
-import { loadTensorflowModel, TensorFlowModel, useTensorflowModel } from 'react-native-fast-tflite';
+import { loadTensorflowModel, TensorflowModel, useTensorflowModel } from 'react-native-fast-tflite';
 import { Camera } from 'react-native-vision-camera';
 
 // Map COCO indices to labels (subset for MVP)
@@ -34,18 +34,18 @@ export interface DetectionResult {
 }
 
 export class ObjectDetector {
-    private model: TensorFlowModel | null = null;
+    private model: TensorflowModel | null = null;
     private isLoaded = false;
 
     async load() {
         try {
-            console.log('Loading Object Detection Model...');
-            // Note: In a real app, 'mobilenet_ssd.tflite' must be bundled in assets
-            // For this MVP code, we assume it is available via the require or URI mechanism
-            // supported by react-native-fast-tflite
+            console.log('Loading Object Detection Model (Mocked)...');
+            // SKIP loading 32-byte dummy files to avoid native crash
+            /*
             this.model = await loadTensorflowModel(require('../models/mobilenet_ssd.tflite'));
+            */
             this.isLoaded = true;
-            console.log('Object Detector Loaded');
+            console.log('Object Detector Ready (Mocked)');
         } catch (e) {
             console.error('Failed to load Object Detector model:', e);
         }
