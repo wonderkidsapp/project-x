@@ -1,15 +1,18 @@
+import { loadTensorflowModel, TensorflowModel } from 'react-native-fast-tflite';
+
 export class DepthEstimator {
+    private model: TensorflowModel | null = null;
     private isLoaded = false;
 
     async load() {
-        console.log('Loading Depth Estimator...');
-        // If using a specialized model like MiDaS:
-        // this.model = await loadTensorflowModel(require('../models/midas_small.tflite'));
-
-        // For iPhone LiDAR, we rely on the camera hardware/ARKit stream directly
-        // so "loading" might just mean initializing configurations.
-        this.isLoaded = true;
-        console.log('Depth Estimator Ready');
+        try {
+            console.log('Loading MiDaS Depth Model...');
+            this.model = await loadTensorflowModel(require('../models/midas_small.tflite'));
+            this.isLoaded = true;
+            console.log('MiDaS Depth Estimator Ready');
+        } catch (e) {
+            console.error('Failed to load MiDaS model:', e);
+        }
     }
 
     /**
