@@ -46,7 +46,6 @@
           "enableCodeScanner": false
         }
       ],
-      "expo-splash-screen",
       "expo-asset",
       [
         "expo-build-properties",
