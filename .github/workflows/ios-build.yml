@@ -26,9 +26,13 @@ jobs:
         working-directory: hpws-mobile
         run: npm install
 
-      - name: Expo Prebuild
+      - name: Clean iOS Directory
         working-directory: hpws-mobile
-        run: npx expo prebuild --platform ios --no-install
+        run: rm -rf ios
+
+      - name: Expo Prebuild (Clean)
+        working-directory: hpws-mobile
+        run: npx expo prebuild --platform ios --clean --no-install
 
       - name: Install Pods
         working-directory: hpws-mobile/ios
