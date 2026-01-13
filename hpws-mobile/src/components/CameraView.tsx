@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { StyleSheet, Text, View, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { Camera, useCameraDevice, useFrameProcessor, runAtTargetFps, useCameraFormat } from 'react-native-vision-camera';
 import { ObjectDetector } from '../engine/ObjectDetector';
@@ -6,19 +6,14 @@ import { DepthEstimator } from '../engine/DepthEstimator';
 import { AttentionRiskEngine } from '../engine/AttentionRiskEngine';
 import { AudioInterface } from '../engine/AudioInterface';
 
-// Global singleton instances to persist across re-renders
-const objectDetector = new ObjectDetector();
-const depthEstimator = new DepthEstimator();
-const audioInterface = new AudioInterface();
-const attentionEngine = new AttentionRiskEngine();
-
 interface Props {
     isActive: boolean;
+    onReadyChange?: (ready: boolean) => void;
 }
 
 type AppState = 'STARTUP' | 'LOADING_OBJ' | 'LOADING_DEPTH' | 'LOADING_AUDIO' | 'NEED_PERMISSION' | 'READY' | 'ERROR';
 
-export const CameraView = ({ isActive }: Props) => {
+export const CameraView = ({ isActive, onReadyChange }: Props) => {
     const device = useCameraDevice('back');
     const format = device ? useCameraFormat(device, [
         { videoResolution: { width: 1280, height: 720 } },
@@ -28,25 +23,34 @@ export const CameraView = ({ isActive }: Props) => {
     const [appState, setAppState] = useState<AppState>('STARTUP');
     const [statusMsg, setStatusMsg] = useState('Đang khởi động...');
 
-    // Strict Sequential Initialization Logic
+    // Use refs to store engine instances (they persist across re-renders but don't trigger re-renders)
+    const objectDetectorRef = useRef<ObjectDetector | null>(null);
+    const depthEstimatorRef = useRef<DepthEstimator | null>(null);
+    const audioInterfaceRef = useRef<AudioInterface | null>(null);
+    const attentionEngineRef = useRef<AttentionRiskEngine | null>(null);
+
     const initApp = useCallback(async () => {
         try {
-            // STEP 1: Load YOLO Model (High Memory)
+            // STEP 1: Load YOLO Model
             setAppState('LOADING_OBJ');
             setStatusMsg('Nạp mô hình nhận diện vật thể...');
-            const objOk = await objectDetector.load();
+            objectDetectorRef.current = new ObjectDetector();
+            const objOk = await objectDetectorRef.current.load();
             if (!objOk) throw new Error('Không thể nạp mô hình nhận diện (YOLO)');
 
-            // STEP 2: Load MiDaS Model (High Memory)
+            // STEP 2: Load MiDaS Model
             setAppState('LOADING_DEPTH');
             setStatusMsg('Nạp mô hình ước tính chiều sâu...');
-            const depthOk = await depthEstimator.load();
+            depthEstimatorRef.current = new DepthEstimator();
+            const depthOk = await depthEstimatorRef.current.load();
             if (!depthOk) throw new Error('Không thể nạp mô hình chiều sâu (MiDaS)');
 
             // STEP 3: Setup Audio & TTS
             setAppState('LOADING_AUDIO');
             setStatusMsg('Khởi tạo âm thanh và giọng nói...');
-            await audioInterface.load();
+            attentionEngineRef.current = new AttentionRiskEngine();
+            audioInterfaceRef.current = new AudioInterface();
+            await audioInterfaceRef.current.load();
 
             // STEP 4: Check or Request Permissions
             const permission = await Camera.getCameraPermissionStatus();
@@ -67,6 +71,15 @@ export const CameraView = ({ isActive }: Props) => {
         initApp();
     }, [initApp]);
 
+    // Notify parent when ready state changes
+    useEffect(() => {
+        if (appState === 'READY') {
+            onReadyChange?.(true);
+        } else if (appState === 'ERROR') {
+            onReadyChange?.(false);
+        }
+    }, [appState, onReadyChange]);
+
     const requestPermission = async () => {
         const result = await Camera.requestCameraPermission();
         if (result === 'granted') {
@@ -81,11 +94,10 @@ export const CameraView = ({ isActive }: Props) => {
         'worklet';
         runAtTargetFps(5, () => {
             'worklet';
-            // Logic processor stays safe here
+            // Safe processing
         });
     }, []);
 
-    // Helper UI for Loading States
     if (appState !== 'READY') {
         return (
             <View style={[styles.loadingContainer, appState === 'ERROR' && styles.errorBg]}>
@@ -135,31 +147,35 @@ const styles = StyleSheet.create({
     },
     loadingContainer: {
         flex: 1,
-        backgroundColor: '#000',
+        backgroundColor: '#0a0a0a',
         alignItems: 'center',
         justifyContent: 'center',
         padding: 40
     },
     errorBg: {
-        backgroundColor: '#300',
+        backgroundColor: '#1a0505'
     },
     title: {
         color: '#2ecc71',
-        fontSize: 24,
+        fontSize: 28,
         fontWeight: 'bold',
-        marginBottom: 10
+        marginBottom: 15,
+        letterSpacing: 1
     },
     status: {
-        color: '#fff',
-        fontSize: 16,
+        color: '#aaa',
+        fontSize: 17,
         textAlign: 'center',
-        marginBottom: 30
+        marginBottom: 40,
+        fontWeight: '500'
     },
     btn: {
         backgroundColor: '#2ecc71',
-        paddingHorizontal: 30,
-        paddingVertical: 15,
-        borderRadius: 12
+        paddingHorizontal: 40,
+        paddingVertical: 18,
+        borderRadius: 20,
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.1)'
     },
     btnText: {
         color: '#fff',

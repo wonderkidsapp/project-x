@@ -7,6 +7,7 @@ import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 
 const App = () => {
   const [isActive, setIsActive] = useState(false);
+  const [isCameraReady, setIsCameraReady] = useState(false);
 
   useEffect(() => {
     // Prevent screen sleep when app is open
@@ -15,6 +16,12 @@ const App = () => {
   }, []);
 
   const toggleActive = () => {
+    // Only allow toggle if camera system is ready
+    if (!isCameraReady) {
+      console.warn('Camera system not ready yet');
+      return;
+    }
+
     ReactNativeHapticFeedback.trigger('impactHeavy');
     setIsActive(!isActive);
   };
@@ -25,7 +32,10 @@ const App = () => {
 
       {/* Camera Layer (Background) */}
       <View style={styles.cameraContainer}>
-        <CameraView isActive={isActive} />
+        <CameraView
+          isActive={isActive}
+          onReadyChange={setIsCameraReady}
+        />
       </View>
 
       {/* Overlay Layer */}
@@ -34,12 +44,17 @@ const App = () => {
 
         <View style={styles.controls}>
           <TouchableOpacity
-            style={[styles.button, isActive ? styles.buttonStop : styles.buttonStart]}
+            style={[
+              styles.button,
+              isActive ? styles.buttonStop : styles.buttonStart,
+              !isCameraReady && styles.buttonDisabled
+            ]}
             onPress={toggleActive}
             activeOpacity={0.7}
+            disabled={!isCameraReady}
           >
             <Text style={styles.buttonText}>
-              {isActive ? "DỪNG LẠI" : "BẮT ĐẦU"}
+              {!isCameraReady ? "ĐANG TẢI..." : (isActive ? "DỪNG LẠI" : "BẮT ĐẦU")}
             </Text>
           </TouchableOpacity>
         </View>
@@ -82,6 +97,10 @@ const styles = StyleSheet.create({
   },
   buttonStop: {
     backgroundColor: '#e74c3c', // Red
+  },
+  buttonDisabled: {
+    backgroundColor: '#555',
+    opacity: 0.6
   },
   buttonText: {
     color: 'white',

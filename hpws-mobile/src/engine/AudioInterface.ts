@@ -20,15 +20,24 @@ export class AudioInterface {
             console.log('AudioInterface: Initializing...');
 
             // 1. Setup Audio Session for iOS 18
-            await Audio.setAudioModeAsync({
-                playsInSilentModeIOS: true,
-                staysActiveInBackground: true,
-                shouldDuckAndroid: true,
-            });
+            try {
+                await Audio.setAudioModeAsync({
+                    playsInSilentModeIOS: true,
+                    staysActiveInBackground: true,
+                    shouldDuckAndroid: true,
+                });
+            } catch (audioErr) {
+                console.warn('AudioInterface: Audio mode setup failed', audioErr);
+            }
 
-            // 2. Setup TTS
-            await Tts.getInitStatus();
-            await Tts.setDefaultLanguage('vi-VN');
+            // 2. Setup TTS (non-blocking if fails)
+            try {
+                await Tts.getInitStatus();
+                await Tts.setDefaultLanguage('vi-VN');
+                console.log('AudioInterface: TTS Ready');
+            } catch (ttsErr) {
+                console.warn('AudioInterface: TTS setup failed, will continue without voice', ttsErr);
+            }
 
             this.isReady = true;
             console.log('AudioInterface: Ready');
