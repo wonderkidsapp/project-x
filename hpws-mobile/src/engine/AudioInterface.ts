@@ -1,10 +1,6 @@
 import Tts from 'react-native-tts';
-import Sound from 'react-native-sound';
+import { Audio } from 'expo-av';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
-
-// Re-defining interfaces here or importing them from a types file would be better clean code practice.
-// For now, adhering to the guideline structure locally.
-// In a real refactor, types should be in src/types or similar.
 
 interface AttentionRisk {
     riskScore: number;
@@ -12,41 +8,88 @@ interface AttentionRisk {
     reason: string;
 }
 
-enum AudioFeedbackType {
-    SILENCE = 'silence',           // Risk < 0.3
-    AMBIENT = 'ambient',           // 0.3 < Risk < 0.5 (subtle beep)
-    NOTIFICATION = 'notification', // 0.5 < Risk < 0.75 (spoken)
-    ALERT = 'alert'               // Risk > 0.75 (urgent spoken)
-}
-
 export class AudioInterface {
     private lastAlertTime = 0;
-    private MIN_ALERT_INTERVAL = 3000; // ms, prevent spam
+    private MIN_ALERT_INTERVAL = 3000;
 
     constructor() {
         Tts.setDefaultLanguage('vi-VN');
+        this.setupAudio();
+    }
+
+    private async setupAudio() {
+        try {
+            await Audio.setAudioModeAsync({
+                playsInSilentModeIOS: true,
+                staysActiveInBackground: true,
+                shouldDuckAndroid: true,
+            });
+        } catch (e) {
+            console.error('Audio Setup Error', e);
+        }
     }
 
     async playFeedback(risk: AttentionRisk) {
-        console.log('Feedback logic (Stubbed):', risk.reason);
-        /*
         const now = Date.now();
         if (now - this.lastAlertTime < this.MIN_ALERT_INTERVAL) {
             return;
         }
-        // ... logic ...
-        */
+
+        switch (risk.urgency) {
+            case 'low':
+                break;
+            case 'medium':
+                await this.speak(risk.reason, { rate: 1.0 });
+                await this.playTone('info');
+                this.lastAlertTime = now;
+                break;
+            case 'high':
+                await this.vibrate('warning');
+                await this.playTone('urgent');
+                await this.speak(risk.reason, { rate: 1.2 });
+                this.lastAlertTime = now;
+                break;
+        }
     }
 
     private async speak(text: string, options: { rate: number }) {
-        console.log('TTS:', text);
+        try {
+            await Tts.setDefaultRate(options.rate);
+            await Tts.speak(text);
+        } catch (e) {
+            console.error("TTS Error", e);
+        }
     }
 
     private async vibrate(pattern: 'warning' | 'info') {
-        console.log('Haptic Triggered');
+        const options = {
+            enableVibrateFallback: true,
+            ignoreAndroidSystemSettings: false
+        };
+
+        if (pattern === 'warning') {
+            ReactNativeHapticFeedback.trigger('notificationWarning', options);
+        } else {
+            ReactNativeHapticFeedback.trigger('impactLight', options);
+        }
     }
 
     private async playTone(type: 'urgent' | 'info') {
-        console.log('Tone Triggered');
+        try {
+            const soundAsset = type === 'urgent'
+                ? require('../../assets/sounds/urgent.mp3')
+                : require('../../assets/sounds/info.mp3');
+
+            const { sound } = await Audio.Sound.createAsync(soundAsset);
+            await sound.playAsync();
+            // Automatically unload sound from memory when done
+            sound.setOnPlaybackStatusUpdate((status: any) => {
+                if (status.isLoaded && status.didJustFinish) {
+                    sound.unloadAsync();
+                }
+            });
+        } catch (e) {
+            console.error("Sound play error", e);
+        }
     }
 }

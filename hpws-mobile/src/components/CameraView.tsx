@@ -96,7 +96,7 @@ export const CameraView = ({ isActive }: Props) => {
                 isActive={isActive}
                 frameProcessor={frameProcessor}
                 pixelFormat="yuv"
-                enableDepthData={false} // Temporarily disable to isolate crash on iPhone 12 Pro
+                enableDepthData={true} // Re-enable for iPhone 12 Pro LiDAR
             />
         </View>
     );
