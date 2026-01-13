@@ -1,4 +1,5 @@
-import { TensorflowModel } from 'react-native-fast-tflite';
+import { loadTensorflowModel, TensorflowModel } from 'react-native-fast-tflite';
+import { Asset } from 'expo-asset';
 
 // Full COCO Labels for YOLOv11
 const COCO_LABELS: Record<number, string> = {
@@ -27,17 +28,24 @@ export class ObjectDetector {
     private isLoaded = false;
 
     public async load(): Promise<void> {
-        console.log('ObjectDetector: Mock Mode Active');
-        this.isLoaded = true;
-        return Promise.resolve();
+        try {
+            console.log('ObjectDetector: Loading YOLOv11...');
+            const modelAsset = require('../models/yolo11.tflite');
+            const asset = await Asset.fromModule(modelAsset).downloadAsync();
+            if (!asset.localUri) throw new Error('Failed to download YOLO model asset');
+
+            this.model = await loadTensorflowModel(asset.localUri);
+            this.isLoaded = true;
+            console.log('ObjectDetector: YOLOv11 Ready');
+        } catch (error) {
+            console.error('ObjectDetector Load Error:', error);
+            throw error;
+        }
     }
 
     public detect(frame: any): DetectionResult[] {
-        // Return nothing for stability
+        if (!this.isLoaded || !this.model) return [];
+        // Actual detection logic will be re-enabled after system stability is confirmed
         return [];
-    }
-
-    public getModel() {
-        return this.model;
     }
 }

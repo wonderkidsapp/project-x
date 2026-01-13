@@ -11,28 +11,36 @@ interface AttentionRisk {
 export class AudioInterface {
     private lastAlertTime = 0;
     private MIN_ALERT_INTERVAL = 3000;
+    private isReady = false;
 
-    constructor() {
-        this.setupAudio();
-    }
+    constructor() { }
 
-    private async setupAudio() {
+    public async load(): Promise<void> {
         try {
-            // Lazy init TTS only
-            setTimeout(async () => {
-                try {
-                    await Tts.getInitStatus();
-                    await Tts.setDefaultLanguage('vi-VN');
-                } catch (e) {
-                    console.warn('TTS Init Warning', e);
-                }
-            }, 2000);
+            console.log('AudioInterface: Initializing...');
+
+            // 1. Setup Audio Session for iOS 18
+            await Audio.setAudioModeAsync({
+                playsInSilentModeIOS: true,
+                staysActiveInBackground: true,
+                shouldDuckAndroid: true,
+            });
+
+            // 2. Setup TTS
+            await Tts.getInitStatus();
+            await Tts.setDefaultLanguage('vi-VN');
+
+            this.isReady = true;
+            console.log('AudioInterface: Ready');
         } catch (e) {
-            console.error('Audio Setup Error', e);
+            console.error('AudioInterface: Init Failed', e);
+            // We don't throw here to allow app to run even if audio fails
         }
     }
 
     async playFeedback(risk: AttentionRisk) {
+        if (!this.isReady) return;
+
         const now = Date.now();
         if (now - this.lastAlertTime < this.MIN_ALERT_INTERVAL) {
             return;
@@ -82,11 +90,6 @@ export class AudioInterface {
             const soundAsset = type === 'urgent'
                 ? require('../../assets/sounds/urgent.mp3')
                 : require('../../assets/sounds/info.mp3');
-
-            if (!soundAsset) {
-                console.warn(`Sound asset for ${type} not found, skipping.`);
-                return;
-            }
 
             const { sound } = await Audio.Sound.createAsync(soundAsset);
             await sound.playAsync();
