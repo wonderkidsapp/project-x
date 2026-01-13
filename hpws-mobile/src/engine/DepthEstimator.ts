@@ -5,23 +5,35 @@ export class DepthEstimator {
     private model: TensorflowModel | null = null;
     private isLoaded = false;
 
-    public async load(): Promise<void> {
+    public async load(): Promise<boolean> {
         try {
-            console.log('DepthEstimator: Loading MiDaS...');
-            const modelAsset = require('../models/midas_small.tflite');
-            const asset = await Asset.fromModule(modelAsset).downloadAsync();
-            if (!asset.localUri) throw new Error('Failed to download MiDaS model asset');
+            console.log('DepthEstimator: Start Loading...');
+            const modelModule = require('../models/midas_small.tflite');
+            const asset = Asset.fromModule(modelModule);
 
-            this.model = await loadTensorflowModel(asset.localUri);
+            if (!asset.localUri) {
+                await asset.downloadAsync();
+            }
+
+            const uri = asset.localUri || asset.uri;
+            if (!uri) throw new Error('MiDaS Asset URI is null');
+
+            console.log(`DepthEstimator: Loading from ${uri}`);
+            this.model = await loadTensorflowModel(uri);
             this.isLoaded = true;
-            console.log('DepthEstimator: MiDaS Ready');
+            console.log('DepthEstimator: MiDaS Loaded Successfully');
+            return true;
         } catch (error) {
-            console.error('DepthEstimator Load Error:', error);
-            throw error;
+            console.error('DepthEstimator Load Fatal:', error);
+            return false;
         }
     }
 
-    public estimateDistance(bbox: [number, number, number, number], frame: any): number {
+    public getStatus(): boolean {
+        return this.isLoaded && this.model !== null;
+    }
+
+    public estimateDistance(bbox: any, frame: any): number {
         return 2.5;
     }
 }

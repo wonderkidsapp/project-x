@@ -1,24 +1,22 @@
-import React, { useEffect, useState } from 'react';
-import { StyleSheet, Text, View, ActivityIndicator } from 'react-native';
+import React, { useEffect, useState, useCallback } from 'react';
+import { StyleSheet, Text, View, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { Camera, useCameraDevice, useFrameProcessor, runAtTargetFps, useCameraFormat } from 'react-native-vision-camera';
 import { ObjectDetector } from '../engine/ObjectDetector';
 import { DepthEstimator } from '../engine/DepthEstimator';
 import { AttentionRiskEngine } from '../engine/AttentionRiskEngine';
 import { AudioInterface } from '../engine/AudioInterface';
 
-// Global instances
-let objectDetector: ObjectDetector;
-let depthEstimator: DepthEstimator;
-let attentionEngine: AttentionRiskEngine;
-let audioInterface: AudioInterface;
+// Global singleton instances to persist across re-renders
+const objectDetector = new ObjectDetector();
+const depthEstimator = new DepthEstimator();
+const audioInterface = new AudioInterface();
+const attentionEngine = new AttentionRiskEngine();
 
 interface Props {
     isActive: boolean;
 }
 
-type InitStep = 'IDLE' | 'PERMISSION' | 'MODEL_OBJ' | 'MODEL_DEPTH' | 'AUDIO' | 'READY' | 'ERROR';
-
-const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+type AppState = 'STARTUP' | 'LOADING_OBJ' | 'LOADING_DEPTH' | 'LOADING_AUDIO' | 'NEED_PERMISSION' | 'READY' | 'ERROR';
 
 export const CameraView = ({ isActive }: Props) => {
     const device = useCameraDevice('back');
@@ -27,78 +25,93 @@ export const CameraView = ({ isActive }: Props) => {
         { fps: 30 }
     ]) : undefined;
 
-    const [step, setStep] = useState<InitStep>('IDLE');
-    const [errorMsg, setErrorMsg] = useState('');
+    const [appState, setAppState] = useState<AppState>('STARTUP');
+    const [statusMsg, setStatusMsg] = useState('Đang khởi động...');
+
+    // Strict Sequential Initialization Logic
+    const initApp = useCallback(async () => {
+        try {
+            // STEP 1: Load YOLO Model (High Memory)
+            setAppState('LOADING_OBJ');
+            setStatusMsg('Nạp mô hình nhận diện vật thể...');
+            const objOk = await objectDetector.load();
+            if (!objOk) throw new Error('Không thể nạp mô hình nhận diện (YOLO)');
+
+            // STEP 2: Load MiDaS Model (High Memory)
+            setAppState('LOADING_DEPTH');
+            setStatusMsg('Nạp mô hình ước tính chiều sâu...');
+            const depthOk = await depthEstimator.load();
+            if (!depthOk) throw new Error('Không thể nạp mô hình chiều sâu (MiDaS)');
+
+            // STEP 3: Setup Audio & TTS
+            setAppState('LOADING_AUDIO');
+            setStatusMsg('Khởi tạo âm thanh và giọng nói...');
+            await audioInterface.load();
+
+            // STEP 4: Check or Request Permissions
+            const permission = await Camera.getCameraPermissionStatus();
+            if (permission !== 'granted') {
+                setAppState('NEED_PERMISSION');
+                return;
+            }
+
+            setAppState('READY');
+        } catch (e: any) {
+            console.error('Initialization Failed:', e);
+            setStatusMsg(`Lỗi: ${e.message}`);
+            setAppState('ERROR');
+        }
+    }, []);
 
     useEffect(() => {
-        const startSequence = async () => {
-            try {
-                // 1. Permission (Wait for UI to settle)
-                setStep('PERMISSION');
-                const status = await Camera.requestCameraPermission();
-                if (status !== 'granted') {
-                    throw new Error('Bạn chưa cho phép truy cập Camera');
-                }
-                await delay(1000);
+        initApp();
+    }, [initApp]);
 
-                // 2. Object Model
-                setStep('MODEL_OBJ');
-                objectDetector = new ObjectDetector();
-                await objectDetector.load();
-                await delay(1000);
-
-                // 3. Depth Model
-                setStep('MODEL_DEPTH');
-                depthEstimator = new DepthEstimator();
-                await depthEstimator.load();
-                await delay(1000);
-
-                // 4. Audio & Engines
-                setStep('AUDIO');
-                attentionEngine = new AttentionRiskEngine();
-                audioInterface = new AudioInterface();
-                await audioInterface.load();
-                await delay(1000);
-
-                setStep('READY');
-            } catch (e: any) {
-                console.error('Init Sequence Failed:', e);
-                setErrorMsg(e.message || 'Lỗi không xác định');
-                setStep('ERROR');
-            }
-        };
-
-        startSequence();
-    }, []);
+    const requestPermission = async () => {
+        const result = await Camera.requestCameraPermission();
+        if (result === 'granted') {
+            setAppState('READY');
+        } else {
+            setStatusMsg('Bạn cần cấp quyền Camera để sử dụng app.');
+            setAppState('ERROR');
+        }
+    };
 
     const frameProcessor = useFrameProcessor((frame) => {
         'worklet';
         runAtTargetFps(5, () => {
             'worklet';
-            console.log("Processing flow stable");
+            // Logic processor stays safe here
         });
     }, []);
 
-    // Important: Render progress screen
-    if (step !== 'READY') {
-        const isError = step === 'ERROR';
+    // Helper UI for Loading States
+    if (appState !== 'READY') {
         return (
-            <View style={[styles.loadingContainer, isError && styles.errorBg]}>
-                {!isError && <ActivityIndicator size="large" color="#2ecc71" style={{ marginBottom: 20 }} />}
-                <Text style={styles.loadingTitle}>HPWS - Hệ thống đang khởi động</Text>
-                <Text style={styles.loadingText}>
-                    {step === 'PERMISSION' && "Đang kiểm tra quyền truy cập camera..."}
-                    {step === 'MODEL_OBJ' && "Đang nạp mô hình Object Detection (Step 1/3)..."}
-                    {step === 'MODEL_DEPTH' && "Đang nạp mô hình Depth Estimation (Step 2/3)..."}
-                    {step === 'AUDIO' && "Đang khởi tạo hệ thống Voice & Audio (Step 3/3)..."}
-                    {isError && `LỖI KHỞI TẠO: ${errorMsg}`}
-                </Text>
-                {isError && <Text style={styles.retryHint}>Vui lòng xóa app và cài lại nếu lỗi tiếp diễn.</Text>}
+            <View style={[styles.loadingContainer, appState === 'ERROR' && styles.errorBg]}>
+                {appState !== 'ERROR' && appState !== 'NEED_PERMISSION' && (
+                    <ActivityIndicator size="large" color="#2ecc71" style={{ marginBottom: 20 }} />
+                )}
+
+                <Text style={styles.title}>HPWS - THIẾT BỊ HỖ TRỢ</Text>
+                <Text style={styles.status}>{statusMsg}</Text>
+
+                {appState === 'NEED_PERMISSION' && (
+                    <TouchableOpacity style={styles.btn} onPress={requestPermission}>
+                        <Text style={styles.btnText}>CHO PHÉP CAMERA</Text>
+                    </TouchableOpacity>
+                )}
+
+                {appState === 'ERROR' && (
+                    <TouchableOpacity style={[styles.btn, { backgroundColor: '#555' }]} onPress={initApp}>
+                        <Text style={styles.btnText}>THỬ LẠI</Text>
+                    </TouchableOpacity>
+                )}
             </View>
         );
     }
 
-    if (!device) return <View style={styles.loadingContainer}><Text style={styles.loadingText}>Không tìm thấy Camera</Text></View>;
+    if (!device) return <View style={styles.loadingContainer}><Text style={styles.status}>Lỗi: Không tìm thấy thiết bị Camera</Text></View>;
 
     return (
         <View style={styles.container}>
@@ -122,29 +135,35 @@ const styles = StyleSheet.create({
     },
     loadingContainer: {
         flex: 1,
-        backgroundColor: '#111',
+        backgroundColor: '#000',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: 30
+        padding: 40
     },
     errorBg: {
-        backgroundColor: '#2c0000'
+        backgroundColor: '#300',
     },
-    loadingTitle: {
+    title: {
         color: '#2ecc71',
-        fontSize: 22,
+        fontSize: 24,
         fontWeight: 'bold',
         marginBottom: 10
     },
-    loadingText: {
-        color: '#eee',
+    status: {
+        color: '#fff',
         fontSize: 16,
         textAlign: 'center',
-        lineHeight: 24
+        marginBottom: 30
     },
-    retryHint: {
-        color: '#aaa',
-        marginTop: 20,
-        fontSize: 14
+    btn: {
+        backgroundColor: '#2ecc71',
+        paddingHorizontal: 30,
+        paddingVertical: 15,
+        borderRadius: 12
+    },
+    btnText: {
+        color: '#fff',
+        fontWeight: 'bold',
+        fontSize: 18
     }
 });
