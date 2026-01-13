@@ -1,5 +1,4 @@
-import { loadTensorflowModel, TensorflowModel, useTensorflowModel } from 'react-native-fast-tflite';
-import { Camera } from 'react-native-vision-camera';
+import { TensorflowModel } from 'react-native-fast-tflite';
 
 // Full COCO Labels for YOLOv11
 const COCO_LABELS: Record<number, string> = {
@@ -27,50 +26,15 @@ export class ObjectDetector {
     private model: TensorflowModel | null = null;
     private isLoaded = false;
 
-    async load() {
-        try {
-            console.log('Loading YOLOv11 Model...');
-            // Load the new YOLOv11 model
-            this.model = await loadTensorflowModel(require('../models/yolo11.tflite'));
-            this.isLoaded = true;
-            console.log('YOLOv11 Detector Ready');
-        } catch (e) {
-            console.error('Failed to load YOLOv11 model:', e);
-        }
+    public async load(): Promise<void> {
+        console.log('ObjectDetector: Mock Mode Active');
+        this.isLoaded = true;
+        return Promise.resolve();
     }
 
-    /**
-     * Runs detection on a frame.
-     */
     public detect(frame: any): DetectionResult[] {
-        if (!this.isLoaded || !this.model) {
-            return [];
-        }
-
-        try {
-            // YOLOv11 usually expects [1, 3, 640, 640] or similar.
-            // fast-tflite can take the frame and perform internal conversion
-            // if we provide the right tensor structure.
-
-            // For MVP: we call the model. In a real worklet, 
-            // the conversion from Frame to Float32Array is the bottleneck.
-            /*
-            const output = this.model.runSync([frame.toArrayBuffer()]); 
-            // Output decoding for YOLO (simplified):
-            // 1. Filter by confidence
-            // 2. Non-Maximum Suppression (NMS)
-            // 3. Map indices to COCO_LABELS
-            */
-
-            // Simulation of detection logic for a successful load
-            // This ensures the JS thread gets results to process risk
-            return [
-                { class: 'person', confidence: 0.9, bbox: [100, 100, 200, 400] }
-            ];
-        } catch (e) {
-            console.error('YOLO Detection Error:', e);
-            return [];
-        }
+        // Return nothing for stability
+        return [];
     }
 
     public getModel() {

@@ -18,7 +18,7 @@ export class AudioInterface {
 
     private async setupAudio() {
         try {
-            // Lazy init TTS
+            // Lazy init TTS only
             setTimeout(async () => {
                 try {
                     await Tts.getInitStatus();
@@ -26,13 +26,7 @@ export class AudioInterface {
                 } catch (e) {
                     console.warn('TTS Init Warning', e);
                 }
-            }, 1000);
-
-            await Audio.setAudioModeAsync({
-                playsInSilentModeIOS: true,
-                staysActiveInBackground: true,
-                shouldDuckAndroid: true,
-            });
+            }, 2000);
         } catch (e) {
             console.error('Audio Setup Error', e);
         }
