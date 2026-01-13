@@ -7,11 +7,11 @@ import { DepthEstimator } from '../engine/DepthEstimator';
 import { AttentionRiskEngine } from '../engine/AttentionRiskEngine';
 import { AudioInterface } from '../engine/AudioInterface';
 
-// Initialize engines (singleton-like for this scope)
-const objectDetector = new ObjectDetector();
-const depthEstimator = new DepthEstimator();
-const attentionEngine = new AttentionRiskEngine();
-const audioInterface = new AudioInterface();
+// Initialized lazily inside the component to prevent race conditions during module load
+let objectDetector: ObjectDetector;
+let depthEstimator: DepthEstimator;
+let attentionEngine: AttentionRiskEngine;
+let audioInterface: AudioInterface;
 
 interface Props {
     isActive: boolean;
@@ -19,23 +19,43 @@ interface Props {
 
 export const CameraView = ({ isActive }: Props) => {
     const device = useCameraDevice('back');
-    // Select a format that supports Depth Capture (LiDAR)
     const format = device ? useCameraFormat(device, [
         { videoResolution: { width: 1280, height: 720 } },
         { fps: 30 }
     ]) : undefined;
 
+    const [isReady, setIsReady] = useState(false);
     const [hasPermission, setHasPermission] = useState(false);
 
     useEffect(() => {
-        (async () => {
-            const status = await Camera.requestCameraPermission();
-            setHasPermission(status === 'granted');
+        const init = async () => {
+            try {
+                const status = await Camera.requestCameraPermission();
+                if (status === 'granted') {
+                    setHasPermission(true);
 
-            // Load models
-            await objectDetector.load();
-            await depthEstimator.load();
-        })();
+                    // Delay initialization to let the system UI settle after permission dialog
+                    setTimeout(async () => {
+                        try {
+                            // Initialize engines seqentially
+                            objectDetector = new ObjectDetector();
+                            depthEstimator = new DepthEstimator();
+                            attentionEngine = new AttentionRiskEngine();
+                            audioInterface = new AudioInterface();
+
+                            await objectDetector.load();
+                            await depthEstimator.load();
+                            setIsReady(true);
+                        } catch (e) {
+                            console.error('Sequence Init Error', e);
+                        }
+                    }, 500);
+                }
+            } catch (e) {
+                console.error('Permission Request Error', e);
+            }
+        };
+        init();
     }, []);
 
     // Frame Processor
@@ -62,6 +82,8 @@ export const CameraView = ({ isActive }: Props) => {
             ambientNoise: 0, // Mock Mic
             timeOfDay: 'day' as const
         };
+
+        if (!attentionEngine || !audioInterface) return;
 
         const risk = attentionEngine.computeAttentionRisk(state);
         audioInterface.playFeedback(risk);
