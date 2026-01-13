@@ -20,11 +20,9 @@
       "infoPlist": {
         "NSCameraUsageDescription": "HPWS uses the camera to detect obstacles for visually impaired users.",
         "NSMicrophoneUsageDescription": "HPWS uses the microphone for voice commands and ambient noise detection.",
-        "NSLocationWhenInUseUsageDescription": "HPWS uses location data to provide context-aware safety alerts in the background.",
+        "NSLocationWhenInUseUsageDescription": "HPWS uses location data to provide context-aware safety alerts.",
         "UIBackgroundModes": [
-          "audio",
-          "location",
-          "fetch"
+          "audio"
         ]
       }
     },
