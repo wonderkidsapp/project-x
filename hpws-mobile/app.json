@@ -43,17 +43,17 @@
       [
         "react-native-vision-camera",
         {
-          "cameraPermissionText": "HPWS uses the camera to detect obstacles for visually impaired users.",
-          "enableMicrophonePermission": true,
-          "microphonePermissionText": "HPWS uses the microphone for voice commands."
+          "enableCodeScanner": false
         }
       ],
+      "expo-splash-screen",
+      "expo-asset",
       [
         "expo-build-properties",
         {
           "ios": {
-            "newArchEnabled": false,
-            "flipper": false
+            "flipper": false,
+            "newArchEnabled": false
           },
           "android": {
             "newArchEnabled": false

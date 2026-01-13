@@ -13,12 +13,21 @@ export class AudioInterface {
     private MIN_ALERT_INTERVAL = 3000;
 
     constructor() {
-        Tts.setDefaultLanguage('vi-VN');
         this.setupAudio();
     }
 
     private async setupAudio() {
         try {
+            // Lazy init TTS
+            setTimeout(async () => {
+                try {
+                    await Tts.getInitStatus();
+                    await Tts.setDefaultLanguage('vi-VN');
+                } catch (e) {
+                    console.warn('TTS Init Warning', e);
+                }
+            }, 1000);
+
             await Audio.setAudioModeAsync({
                 playsInSilentModeIOS: true,
                 staysActiveInBackground: true,

@@ -41,26 +41,9 @@ export const CameraView = ({ isActive }: Props) => {
     // Frame Processor
     const frameProcessor = useFrameProcessor((frame) => {
         'worklet';
-
-        // throttle to ~3-5 FPS to save battery
-        runAtTargetFps(3, () => {
+        runAtTargetFps(5, () => {
             'worklet';
-            // 1. Detection
-            // In reality, we call the JSI method from objectDetector model
-            // const detections = objectDetector.detect(frame); 
-            // For MVP structure compilation:
-            const detections: DetectionResult[] = [];
-
-            // 2. Depth Logic
-            // On iPhone 12 Pro, depth data is not directly in the 'frame' buffer in JS 
-            // in the same way as RGB unless configured.
-            // However, enabling enableDepthData ensures the hardware stream is active.
-            // Actual depth access inside FrameProcessor usually requires platform-native modules
-            // or specific helper functions in VisionCamera v3/v4 to extract the depth buffer.
-
-            // 3. Process Result on JS Thread
-            const runOnJS = Worklets.createRunOnJS(processRisk);
-            runOnJS(detections);
+            console.log("Frame captured");
         });
     }, []);
 
