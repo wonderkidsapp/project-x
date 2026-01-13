@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { SafeAreaView, StyleSheet, StatusBar, TouchableOpacity, Text, View } from 'react-native';
+import { SafeAreaView, StyleSheet, StatusBar, TouchableOpacity, Text, View, ActivityIndicator } from 'react-native';
 import { CameraView } from './components/CameraView';
 import { StatusDisplay } from './components/StatusDisplay';
 import KeepAwake from 'react-native-keep-awake';
@@ -8,11 +8,22 @@ import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 const App = () => {
   const [isActive, setIsActive] = useState(false);
   const [isCameraReady, setIsCameraReady] = useState(false);
+  const [isAppReady, setIsAppReady] = useState(false);
 
   useEffect(() => {
     // Prevent screen sleep when app is open
     KeepAwake.activate();
-    return () => KeepAwake.deactivate();
+
+    // CRITICAL: Delay initial render to let React Native bridge fully initialize
+    // This prevents crash from Text components rendering before native modules are ready
+    const timer = setTimeout(() => {
+      setIsAppReady(true);
+    }, 100);
+
+    return () => {
+      KeepAwake.deactivate();
+      clearTimeout(timer);
+    };
   }, []);
 
   const toggleActive = () => {
@@ -25,6 +36,15 @@ const App = () => {
     ReactNativeHapticFeedback.trigger('impactHeavy');
     setIsActive(!isActive);
   };
+
+  // Show minimal splash while React Native initializes
+  if (!isAppReady) {
+    return (
+      <View style={styles.splash}>
+        <ActivityIndicator size="large" color="#2ecc71" />
+      </View>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -64,6 +84,12 @@ const App = () => {
 };
 
 const styles = StyleSheet.create({
+  splash: {
+    flex: 1,
+    backgroundColor: '#000',
+    justifyContent: 'center',
+    alignItems: 'center'
+  },
   container: {
     flex: 1,
     backgroundColor: 'black',
