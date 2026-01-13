@@ -20,10 +20,10 @@ interface Props {
 export const CameraView = ({ isActive }: Props) => {
     const device = useCameraDevice('back');
     // Select a format that supports Depth Capture (LiDAR)
-    const format = useCameraFormat(device, [
+    const format = device ? useCameraFormat(device, [
         { videoResolution: { width: 1280, height: 720 } },
         { fps: 30 }
-    ]);
+    ]) : undefined;
 
     const [hasPermission, setHasPermission] = useState(false);
 
