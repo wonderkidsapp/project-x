@@ -28,69 +28,25 @@ export class AudioInterface {
     }
 
     async playFeedback(risk: AttentionRisk) {
+        console.log('Feedback logic (Stubbed):', risk.reason);
+        /*
         const now = Date.now();
-
-        // Debounce alerts
         if (now - this.lastAlertTime < this.MIN_ALERT_INTERVAL) {
             return;
         }
-
-        switch (risk.urgency) {
-            case 'low':
-                // No audio, or subtle ambient sound
-                break;
-
-            case 'medium':
-                // Spoken notification
-                await this.speak(risk.reason, { rate: 1.0 });
-                this.lastAlertTime = now;
-                break;
-
-            case 'high':
-                // Haptic + urgent tone + spoken
-                await this.vibrate('warning');
-                await this.playTone('urgent');
-                await this.speak(risk.reason, { rate: 1.2 }); // faster
-                this.lastAlertTime = now;
-                break;
-        }
+        // ... logic ...
+        */
     }
 
     private async speak(text: string, options: { rate: number }) {
-        try {
-            await Tts.setDefaultRate(options.rate);
-            await Tts.speak(text);
-        } catch (e) {
-            console.error("TTS Error", e);
-        }
+        console.log('TTS:', text);
     }
 
     private async vibrate(pattern: 'warning' | 'info') {
-        const options = {
-            enableVibrateFallback: true,
-            ignoreAndroidSystemSettings: false
-        };
-
-        if (pattern === 'warning') {
-            ReactNativeHapticFeedback.trigger('notificationWarning', options);
-        } else {
-            ReactNativeHapticFeedback.trigger('impactLight', options);
-        }
+        console.log('Haptic Triggered');
     }
 
     private async playTone(type: 'urgent' | 'info') {
-        // Pre-recorded tones
-        // Note: You need to ensure these files exist in the bundle
-        try {
-            const sound = new Sound(`${type}.mp3`, Sound.MAIN_BUNDLE, (error) => {
-                if (error) {
-                    console.log('failed to load the sound', error);
-                    return;
-                }
-                sound.play();
-            });
-        } catch (e) {
-            console.error("Sound play error", e);
-        }
+        console.log('Tone Triggered');
     }
 }
