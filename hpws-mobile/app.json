@@ -40,12 +40,6 @@
       ]
     },
     "plugins": [
-      [
-        "react-native-vision-camera",
-        {
-          "enableCodeScanner": false
-        }
-      ],
       "expo-asset",
       [
         "expo-build-properties",
