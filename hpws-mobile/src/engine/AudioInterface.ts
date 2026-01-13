@@ -80,16 +80,21 @@ export class AudioInterface {
                 ? require('../../assets/sounds/urgent.mp3')
                 : require('../../assets/sounds/info.mp3');
 
+            if (!soundAsset) {
+                console.warn(`Sound asset for ${type} not found, skipping.`);
+                return;
+            }
+
             const { sound } = await Audio.Sound.createAsync(soundAsset);
             await sound.playAsync();
-            // Automatically unload sound from memory when done
+
             sound.setOnPlaybackStatusUpdate((status: any) => {
                 if (status.isLoaded && status.didJustFinish) {
                     sound.unloadAsync();
                 }
             });
         } catch (e) {
-            console.error("Sound play error", e);
+            console.error("AudioInterface: Sound play error", e);
         }
     }
 }
