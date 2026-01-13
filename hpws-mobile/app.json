@@ -58,9 +58,6 @@
             "newArchEnabled": false
           }
         }
-      ],
-      [
-        "expo-dev-client"
       ]
     ],
     "extra": {
