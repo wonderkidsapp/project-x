@@ -1,7 +1,7 @@
-diff --git a/node_modules/expo-file-system/ios/Legacy/EXSessionTasks/EXSessionTaskDelegate.h b/node_modules/expo-file-system/ios/Legacy/EXSessionTasks/EXSessionTaskDelegate.h
+diff --git a/node_modules/expo-file-system/ios/EXSessionTasks/EXSessionTaskDelegate.h b/node_modules/expo-file-system/ios/EXSessionTasks/EXSessionTaskDelegate.h
 index 61daeda..70cf650 100644
---- a/node_modules/expo-file-system/ios/Legacy/EXSessionTasks/EXSessionTaskDelegate.h
-+++ b/node_modules/expo-file-system/ios/Legacy/EXSessionTasks/EXSessionTaskDelegate.h
+--- a/node_modules/expo-file-system/ios/EXSessionTasks/EXSessionTaskDelegate.h
++++ b/node_modules/expo-file-system/ios/EXSessionTasks/EXSessionTaskDelegate.h
 @@ -11,22 +11,22 @@
  - (nonnull instancetype)initWithResolve:(EXPromiseResolveBlock)resolve
                                   reject:(EXPromiseRejectBlock)reject;
