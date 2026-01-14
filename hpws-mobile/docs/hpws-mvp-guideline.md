@@ -51,13 +51,13 @@
 **Purpose:** Data processing, Analytics, and API services.
 
 ### 3.3 ML Models (On-Device)
-**Model 1: Object Detection - MobileNet SSD v2**
+**Model 1: Object Detection - YOLO11n**
 *   **Specs:**
-    *   Input: 300×300 RGB image
+    *   Input: 640×640 RGB image (optimized for accuracy) or 320x320 (optimized for speed)
     *   Output: Bounding boxes, classes, confidence scores
     *   Classes: COCO dataset (80 classes) → filter relevant ones
-    *   Inference time: <100ms on modern phones
-    *   Model size: ~10MB
+    *   Inference time: <50ms on modern phones
+    *   Model size: ~6.5MB (TFLite)
 
 *   **Relevant classes for HPDE:**
 ```python
@@ -88,8 +88,9 @@ RELEVANT_CLASSES = {
 }
 ```
 
-*   **Download model:**
-    `wget https://storage.googleapis.com/download.tensorflow.org/models/tflite/coco_ssd_mobilenet_v1_1.0_quant_2018_06_29.zip`
+*   **Download model (Ultralytics YOLO11n TFLite):**
+    `# Use Ultralytics export to get TFLite model`
+    `yolo export model=yolo11n.pt format=tflite`
 
 **Model 2: Depth Estimation - MiDaS Small**
 *   **Specs:**

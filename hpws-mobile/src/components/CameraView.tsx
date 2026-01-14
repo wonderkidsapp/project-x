@@ -31,6 +31,10 @@ export const CameraView = ({ isActive, onReadyChange }: Props) => {
 
     const initApp = useCallback(async () => {
         try {
+            // WAIT for the UI to settle and Splash screen to hide
+            // This prevents iOS 18 Watchdog from killing the app due to long blocking startup
+            await new Promise(resolve => setTimeout(resolve, 1500));
+
             // STEP 1: Load YOLO Model
             setAppState('LOADING_OBJ');
             setStatusMsg('Nạp mô hình nhận diện vật thể...');

@@ -153,7 +153,7 @@ Backend:
 - Python (Mandatory)
 
 ML Models:
-- YOLOv8n (object detection) - 6.7MB
+- YOLO11n (object detection) - 6.5MB
 - MiDaS v3 Small (depth) - 13MB
 - TensorFlow Lite (inference)
 
@@ -217,7 +217,7 @@ root/
 │   │   ├── permissions.ts
 │   │   └── analytics.ts
 │   ├── models/              # ML models
-│   │   ├── mobilenet_ssd.tflite
+│   │   ├── yolo11.tflite
 │   │   └── midas_small.tflite
 │   └── App.tsx              # Entry point
 ├── assets/                  # Sounds, images
