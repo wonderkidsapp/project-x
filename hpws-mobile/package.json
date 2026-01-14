@@ -7,15 +7,16 @@
     "ios": "react-native run-ios",
     "lint": "eslint .",
     "start": "expo start --dev-client",
-    "test": "jest"
+    "test": "jest",
+    "postinstall": "patch-package"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.90.1",
-    "expo": "^51.0.38",
+    "expo": "54.0.31",
     "expo-asset": "~10.0.10",
     "expo-av": "~14.0.7",
     "expo-build-properties": "~0.12.5",
-    "expo-file-system": "~17.0.1",
+    "expo-file-system": "19.0.21",
     "expo-status-bar": "~1.12.1",
     "react": "18.2.0",
     "react-native": "0.74.5",
@@ -31,7 +32,7 @@
     "@babel/core": "^7.20.0",
     "@babel/preset-env": "^7.20.0",
     "@babel/runtime": "^7.20.0",
-    "@expo/metro-config": "~0.18.11",
+    "@expo/metro-config": "54.0.13",
     "@react-native/babel-preset": "0.74.87",
     "@react-native/eslint-config": "0.74.87",
     "@react-native/metro-config": "0.74.87",
@@ -41,6 +42,7 @@
     "babel-jest": "^29.6.3",
     "eslint": "^8.19.0",
     "jest": "^29.6.3",
+    "patch-package": "^8.0.1",
     "prettier": "2.8.8",
     "react-test-renderer": "18.2.0",
     "typescript": "5.3.3"
